@@ -1,0 +1,92 @@
+import streamlit as st
+from langdetect import detect
+from io import BytesIO
+from mtranslate import translate
+import chardet
+# Streamlit configuration
+st.set_page_config(
+    page_title="Language Translation App",
+    page_icon="🌐",
+    layout="wide",
+)
+
+def identify_language(text):
+    try:
+        language = detect(text)
+        return language
+    except:
+        return None
+
+def translate_text(text, target_language):
+    try:
+        translated_text = translate(text, target_language)
+        return translated_text
+    except:
+        return None
+
+def main():
+    st.title("Language Translation App")
+
+    # Input text area
+    input_text = st.text_area("Enter the text you want to translate:")
+
+    # Language detection
+    identified_language = identify_language(input_text)
+
+    if identified_language:
+        st.info(f"Identified Language: {identified_language}")
+    else:
+        st.warning("Language detection failed. Please provide valid text.")
+
+    # Target language selection
+    target_language = st.selectbox("Select the target language:", ["en", "es", "fr", "hi", "sa"])
+
+    # Translation
+    if st.button("Translate"):
+        if identified_language and input_text:
+            translated_text = translate_text(input_text, target_language)
+            if translated_text is not None:
+                st.success(f"Translation to {target_language}: {translated_text}")
+            else:
+                st.warning("Translation failed. Make sure you have valid input text and target language.")
+        else:
+            st.warning("Unable to perform translation. Make sure you have valid input text.")
+
+    # File upload for translation
+    st.subheader("Upload a Word Document for Translation:")
+    uploaded_file = st.file_uploader("Choose a Word document (.docx)", type="docx")
+
+    if uploaded_file is not None:
+        docx_content = uploaded_file.read()
+        st.info("File Uploaded Successfully!")
+
+        # Perform translation on the document content
+        try:
+            # Detect the document encoding or use a default (fallback) encoding
+            doc_encoding_info = chardet.detect(docx_content)
+            doc_encoding = doc_encoding_info.get('encoding', 'utf-8')
+
+            # Decode the document content
+            doc_text = docx_content.decode(doc_encoding)
+
+            identified_language_doc = identify_language(doc_text)
+
+            if identified_language_doc:
+                st.info(f"Identified Language in Document: {identified_language_doc}")
+            else:
+                st.warning("Language detection failed for the document.")
+
+            if st.button("Translate Document"):
+                if identified_language_doc:
+                    translated_doc = translate_text(doc_text, target_language)
+                    if translated_doc is not None:
+                        st.success(f"Translation to {target_language}:\n{translated_doc}")
+                    else:
+                        st.warning("Translation failed. Make sure the document has valid text.")
+                else:
+                    st.warning("Unable to perform translation. Make sure the document has valid text.")
+        except Exception as e:
+            st.error(f"Error processing the document: {e}")
+
+if __name__ == "__main__":
+    main()
