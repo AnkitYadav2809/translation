@@ -1,0 +1,6 @@
+streamlit
+langdetect
+mtranslate
+chardet
+python-docx
+PyMuPDF
